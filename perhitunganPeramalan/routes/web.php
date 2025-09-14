@@ -3,10 +3,10 @@
 use App\Http\Controllers\CoffeDataController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('coffe_sales.index');
-});
+Route::get('/', [CoffeDataController::class, 'report']);
 
-Route::get('/coffee-sales', [CoffeDataController::class,'index'])->name('coffee_sales.index');
-Route::post('/coffee-sales/upload', [CoffeDataController::class, 'upload'])->name('coffee_sales.upload');
+
+Route::post('/coffee-sales', [CoffeDataController::class,'import'])->name('coffee.import');
+Route::get('/coffee-report', [CoffeDataController::class, 'report'])->name('coffe.report');
+
 

@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>PERHITUNGAN PERAMALAN</h1>
-    <main class="m-4">
+    <main class="m-4 p-10">
         @yield('content')
     </main>
 
