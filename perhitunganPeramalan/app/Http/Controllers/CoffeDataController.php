@@ -159,4 +159,9 @@ class CoffeDataController extends Controller
         }
         return view('coffe_sales.index', compact('forecast'));
     }
+
+    public function delete(){
+        DB::table('coffe_data')->delete();
+        return back()->with('success', 'Data berhasil dihapus');
+    }
 }
