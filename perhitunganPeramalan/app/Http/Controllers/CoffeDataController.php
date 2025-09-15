@@ -97,7 +97,6 @@ class CoffeDataController extends Controller
     // Export Database ke Excel
     public function report()
 {
-    // Ambil data rata-rata per bulan
     $monthlyData = DB::table('coffe_data')
         ->select(
             DB::raw("DATE_FORMAT(datetime, '%Y-%m') as month"),
@@ -107,28 +106,53 @@ class CoffeDataController extends Controller
         ->orderBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
         ->get();
 
-    // Hitung Single Exponential Smoothing (SES)
-    $alpha = 0.5; // smoothing constant (bisa Anda sesuaikan)
-    $forecast = [];
-    $previousForecast = $monthlyData[0]->avg_moneyy ?? 0;
+    if ($monthlyData->isEmpty()) {
+        return view('coffe_sales.index', ['monthlyData' => $monthlyData, 'forecast' => [], 'nextForecast' => null]);
+    }
 
-    foreach ($monthlyData as $index => $row) {
-        if ($index == 0) {
-            $forecastValue = $previousForecast; // forecast pertama = nilai aktual pertama
-        } else {
-            $forecastValue = $alpha * $row->avg_moneyy + (1 - $alpha) * $previousForecast;
-            $previousForecast = $forecastValue;
-        }
+    $alpha = 0.7; // smoothing constant
+    $forecast = [];
+
+    // Inisialisasi: F_1 = Y_1 (bisa juga di-set null jika mau)
+    $first = $monthlyData->first();
+    $previousForecast = (float) $first->avg_moneyy;
+    $previousActual = (float) $first->avg_moneyy;
+
+    // catat forecast untuk periode pertama (seringkali diset sama dengan actual)
+    $forecast[] = [
+        'month'    => $first->month,
+        'actual'   => round($previousActual, 2),
+        'forecast' => round($previousForecast, 2),
+    ];
+
+
+    // mulai dari index 1 (periode ke-2)
+    foreach ($monthlyData->slice(1) as $row) {
+        $actual = (float) $row->avg_moneyy;
+
+        // Forecast for current month t = alpha * Y_{t-1} + (1-alpha) * F_{t-1}
+        $forecastValue = $alpha * $previousActual + (1 - $alpha) * $previousForecast;
 
         $forecast[] = [
             'month'    => $row->month,
-            'actual'   => round($row->avg_moneyy, 2),
+            'actual'   => round($actual, 2),
             'forecast' => round($forecastValue, 2),
         ];
+        // dd($forecastValue);
+
+        // update previous values for next iteration
+        $previousForecast = $forecastValue;
+        $previousActual = $actual;
     }
 
-    return view('coffe_sales.index', compact('monthlyData', 'forecast'));
+    // Jika ingin forecast untuk bulan berikutnya (t+1):
+    // gunakan actual terakhir dan forecast terakhir:
+    $lastActual = (float) $monthlyData->last()->avg_moneyy;
+    $nextForecast = $alpha * $lastActual + (1 - $alpha) * $previousForecast;
+
+    return view('coffe_sales.index', compact('monthlyData', 'forecast', 'nextForecast'));
 }
+
 
 
     public function perhitunganSES(){
