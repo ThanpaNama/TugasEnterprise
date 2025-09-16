@@ -96,92 +96,61 @@ class CoffeDataController extends Controller
 
     // Export Database ke Excel
     public function report()
-{
-    $monthlyData = DB::table('coffe_data')
-        ->select(
-            DB::raw("DATE_FORMAT(datetime, '%Y-%m') as month"),
-            DB::raw("AVG(moneyy) as avg_moneyy")
-        )
-        ->groupBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
-        ->orderBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
-        ->get();
-
-    if ($monthlyData->isEmpty()) {
-        return view('coffe_sales.index', ['monthlyData' => $monthlyData, 'forecast' => [], 'nextForecast' => null]);
-    }
-
-    $alpha = 0.7; // smoothing constant
-    $forecast = [];
-
-    // Inisialisasi: F_1 = Y_1 (bisa juga di-set null jika mau)
-    $first = $monthlyData->first();
-    $previousForecast = (float) $first->avg_moneyy;
-    $previousActual = (float) $first->avg_moneyy;
-
-    // catat forecast untuk periode pertama (seringkali diset sama dengan actual)
-    $forecast[] = [
-        'month'    => $first->month,
-        'actual'   => round($previousActual, 2),
-        'forecast' => round($previousForecast, 2),
-    ];
-
-
-    // mulai dari index 1 (periode ke-2)
-    foreach ($monthlyData->slice(1) as $row) {
-        $actual = (float) $row->avg_moneyy;
-
-        // Forecast for current month t = alpha * Y_{t-1} + (1-alpha) * F_{t-1}
-        $forecastValue = $alpha * $previousActual + (1 - $alpha) * $previousForecast;
-
-        $forecast[] = [
-            'month'    => $row->month,
-            'actual'   => round($actual, 2),
-            'forecast' => round($forecastValue, 2),
-        ];
-        // dd($forecastValue);
-
-        // update previous values for next iteration
-        $previousForecast = $forecastValue;
-        $previousActual = $actual;
-    }
-
-    // Jika ingin forecast untuk bulan berikutnya (t+1):
-    // gunakan actual terakhir dan forecast terakhir:
-    $lastActual = (float) $monthlyData->last()->avg_moneyy;
-    $nextForecast = $alpha * $lastActual + (1 - $alpha) * $previousForecast;
-
-    return view('coffe_sales.index', compact('monthlyData', 'forecast', 'nextForecast'));
-}
-
-
-
-    public function perhitunganSES(){
+    {
         $monthlyData = DB::table('coffe_data')
-        ->select(
-            DB::raw("DATE_FORMAT(datetime, '%Y-%m') as month"),
-            DB::raw("AVG(moneyy) as avg_moneyy")
-        )
-        ->groupBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
-        ->orederBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m"))
-        ->get();
-        $alpha = 0.5;
-        $forecast = [];
-        $previousForecast = $monthlyData[0]->avg_moneyy;
+            ->select(
+                DB::raw("DATE_FORMAT(datetime, '%Y-%m') as month"),
+                DB::raw("AVG(moneyy) as avg_moneyy")
+            )
+            ->groupBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
+            ->orderBy(DB::raw("DATE_FORMAT(datetime, '%Y-%m')"))
+            ->get();
 
-        foreach($monthlyData as $index => $row){
-            if($index == 0){
-                $forecastvalue = $previousForecast;
-            }else{
-                $forecastvalue = $alpha * $row->avg_moneyy + (1 - $alpha) * $previousForecast;
-                $previousForecast = $forecastvalue;
-            }
-            $forecast[] = [
-                'month' => $row->month,
-                'actual' => round($row->avg_moneyy, 2),
-                'forecast' => round($forecastvalue,2)
-            ];
+        if ($monthlyData->isEmpty()) {
+            return view('coffe_sales.index', ['monthlyData' => $monthlyData, 'forecast' => [], 'nextForecast' => null, 'alpha' => 0.5]);
         }
-        return view('coffe_sales.index', compact('forecast'));
+
+        $alpha = request('alpha', 0.5);
+        $forecast = [];
+
+        // Inisialisasi: F_1 = Y_1 (bisa juga di-set null jika mau)
+        $first = $monthlyData->first();
+        $previousForecast = (float) $first->avg_moneyy;
+        $previousActual = (float) $first->avg_moneyy;
+
+        // catat forecast untuk periode pertama (seringkali diset sama dengan actual)
+        $forecast[] = [
+            'month'    => $first->month,
+            'actual'   => round($previousActual, 2),
+            'forecast' => round($previousForecast, 2),
+        ];
+
+
+        // mulai dari index 1 (periode ke-2)
+        foreach ($monthlyData->slice(1) as $row) {
+            $actual = (float) $row->avg_moneyy;
+
+            // Forecast for current month t = alpha * Y_{t-1} + (1-alpha) * F_{t-1}
+            $forecastValue = $alpha * $previousActual + (1 - $alpha) * $previousForecast;
+
+            $forecast[] = [
+                'month'    => $row->month,
+                'actual'   => round($actual, 2),
+                'forecast' => round($forecastValue, 2),
+            ];
+            // dd($forecastValue);
+
+            // update previous values for next iteration
+            $previousForecast = $forecastValue;
+            $previousActual = $actual;
+        }
+
+        // Jika ingin forecast untuk bulan berikutnya (t+1):
+        // gunakan actual terakhir dan forecast terakhir:
+        $lastActual = (float) $monthlyData->last()->avg_moneyy;
+        $nextForecast = $alpha * $lastActual + (1 - $alpha) * $previousForecast;
+
+        return view('coffe_sales.index', compact('monthlyData', 'forecast', 'nextForecast', 'alpha'));
     }
 
     public function delete(){

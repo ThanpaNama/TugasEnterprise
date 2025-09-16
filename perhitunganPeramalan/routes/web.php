@@ -3,7 +3,7 @@
 use App\Http\Controllers\CoffeDataController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [CoffeDataController::class, 'report']);
+Route::get('/', [CoffeDataController::class, 'report'])->name('report');
 
 
 Route::post('/coffee-sales', [CoffeDataController::class,'import'])->name('coffee.import');

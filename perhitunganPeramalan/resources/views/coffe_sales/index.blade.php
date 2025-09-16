@@ -92,7 +92,19 @@
     <div class="card mb-5">
         <div class="card-body">
             <h2 class="text-center mb-4"><i class="bi bi-bar-chart-line"></i> Forecast dengan Single Exponential Smoothing</h2>
-                         <!-- Chart perbandingan Actual vs Forecast -->
+            <form method="GET" action="{{ route('report') }}" class="mb-4 row justify-content-center align-items-end" id="alphaForm">
+                <div class="col-md-3">
+                    <label for="alpha" class="form-label fw-semibold">Nilai Alpha (α)</label>
+                    <select name="alpha" id="alpha" class="form-select" onchange="document.getElementById('alphaForm').submit();">
+                        @for ($i = 0.1; $i <= 0.9; $i += 0.1)
+                            <option value="{{ number_format($i, 1) }}" {{ $alpha == number_format($i, 1) ? 'selected' : '' }}>
+                                {{ number_format($i, 1) }}
+                            </option>
+                        @endfor
+                    </select>
+                </div>
+            </form>
+            <!-- Chart perbandingan Actual vs Forecast -->
             <canvas id="forecastChart" height="130"></canvas>
             <br>
             <table class="table table-bordered table-hover">
