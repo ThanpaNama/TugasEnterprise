@@ -113,6 +113,7 @@
                         <th>Bulan</th>
                         <th>Rata-rata (Actual)</th>
                         <th>Forecast</th>
+                        <th>MAE</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,12 +122,27 @@
                             <td>{{ \Carbon\Carbon::parse($row['month'].'-01')->translatedFormat('F Y') }}</td>
                             <td><span class="badge bg-success fs-6">${{ number_format($row['actual'], 2, ',', '.') }}</span></td>
                             <td><span class="badge bg-primary fs-6">${{ number_format($row['forecast'], 2, ',', '.') }}</span></td>
+                            <td><span class="badge bg-primary fs-6">${{ number_format($row['abs_error'], 2, ',', '.') }}</span></td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-
-
+            <table class="table table-bordered table-hover mt-4">
+                <thead class="table-info text-center">
+                    <tr>
+                        <th>MAE</th>
+                        <th>MSE</th>
+                        <th>MAPE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="text-center">
+                        <td><span class="badge bg-warning fs-6">${{ number_format($mae, 2, ',', '.') }}</span></td>
+                        <td><span class="badge bg-danger fs-6">${{ number_format($mse, 2, ',', '.') }}</span></td>
+                        <td><span class="badge bg-info fs-6">{{ number_format($mape, 2, ',', '.') }}%</span></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

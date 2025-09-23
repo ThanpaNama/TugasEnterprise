@@ -97,6 +97,7 @@ class CoffeDataController extends Controller
     // Export Database ke Excel
     public function report()
     {
+        $data = DB::table('coffe_data')->get();
         $monthlyData = DB::table('coffe_data')
             ->select(
                 DB::raw("DATE_FORMAT(datetime, '%Y-%m') as month"),
@@ -107,11 +108,15 @@ class CoffeDataController extends Controller
             ->get();
 
         if ($monthlyData->isEmpty()) {
-            return view('coffe_sales.index', ['monthlyData' => $monthlyData, 'forecast' => [], 'nextForecast' => null, 'alpha' => 0.5]);
+            return view('coffe_sales.index', ['monthlyData' => $monthlyData, 'forecast' => [], 'nextForecast' => null, 'alpha' => 0.5, 'mae' => null, 'mse' => null, 'mape' => null]);
         }
 
         $alpha = request('alpha', 0.5);
         $forecast = [];
+        $totalError = 0;
+        $totalSquaredError = 0;
+        $totalPercentageError = 0;
+        $n = $monthlyData->count();
 
         // Inisialisasi: F_1 = Y_1 (bisa juga di-set null jika mau)
         $first = $monthlyData->first();
@@ -123,8 +128,9 @@ class CoffeDataController extends Controller
             'month'    => $first->month,
             'actual'   => round($previousActual, 2),
             'forecast' => round($previousForecast, 2),
+            'error'    => 0, // Error untuk periode pertama dianggap 0
+            'abs_error' => 0 // Absolute error untuk periode pertama dianggap 0
         ];
-
 
         // mulai dari index 1 (periode ke-2)
         foreach ($monthlyData->slice(1) as $row) {
@@ -133,24 +139,41 @@ class CoffeDataController extends Controller
             // Forecast for current month t = alpha * Y_{t-1} + (1-alpha) * F_{t-1}
             $forecastValue = $alpha * $previousActual + (1 - $alpha) * $previousForecast;
 
+            // Hitung error dan absolute error
+            $error = $actual - $forecastValue;
+            $absError = abs($error);
+            $absError = abs($error);
+            $percentageError = $actual != 0 ? abs($error / $actual) * 100 : 0;
+
             $forecast[] = [
                 'month'    => $row->month,
                 'actual'   => round($actual, 2),
                 'forecast' => round($forecastValue, 2),
+                'error'    => round($error, 2),
+                'abs_error' => round($absError, 2)
             ];
-            // dd($forecastValue);
+
+            // update total error metrics
+            $totalError += $absError;
+            $totalSquaredError += pow($error, 2);
+            $totalPercentageError += $percentageError;
 
             // update previous values for next iteration
             $previousForecast = $forecastValue;
             $previousActual = $actual;
         }
 
+        $effectiveN = $n > 1 ? $n - 1 : 1;  
+        $mae = $totalError / $effectiveN;
+        $mse = $totalSquaredError / $effectiveN;
+        $mape = $totalPercentageError / $effectiveN;
+
         // Jika ingin forecast untuk bulan berikutnya (t+1):
         // gunakan actual terakhir dan forecast terakhir:
         $lastActual = (float) $monthlyData->last()->avg_moneyy;
         $nextForecast = $alpha * $lastActual + (1 - $alpha) * $previousForecast;
 
-        return view('coffe_sales.index', compact('monthlyData', 'forecast', 'nextForecast', 'alpha'));
+        return view('coffe_sales.index', compact('monthlyData', 'forecast', 'nextForecast', 'alpha', 'data', 'mae', 'mse', 'mape'));
     }
 
     public function delete(){
