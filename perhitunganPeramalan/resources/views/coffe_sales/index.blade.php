@@ -79,7 +79,7 @@
                     @foreach ($monthlyData as $row)
                         <tr>
                             <td>{{ $row->month }}</td>
-                            <td>Rp {{ number_format($row->avg_moneyy, 2, ',', '.') }}</td>
+                            <td>${{ number_format($row->avg_moneyy, 2, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -91,7 +91,7 @@
     <!-- Forecast SES -->
     <div class="card mb-5">
         <div class="card-body">
-            <h2 class="text-center mb-4"><i class="bi bi-bar-chart-line"></i> Forecast dengan Single Exponential Smoothing</h2>
+            <h2 class="text-center mb-4"><i class="bi bi-bar-chart-line"></i> PERAMALAN PENJUALAN KOPI</h2>
             <form method="GET" action="{{ route('report') }}" class="mb-4 row justify-content-center align-items-end" id="alphaForm">
                 <div class="col-md-3">
                     <label for="alpha" class="form-label fw-semibold">Nilai Alpha (α)</label>
@@ -119,14 +119,14 @@
                     @foreach($forecast as $row)
                         <tr class="text-center">
                             <td>{{ \Carbon\Carbon::parse($row['month'].'-01')->translatedFormat('F Y') }}</td>
-                            <td><span class="badge bg-success fs-6">Rp {{ number_format($row['actual'], 2, ',', '.') }}</span></td>
-                            <td><span class="badge bg-primary fs-6">Rp {{ number_format($row['forecast'], 2, ',', '.') }}</span></td>
+                            <td><span class="badge bg-success fs-6">${{ number_format($row['actual'], 2, ',', '.') }}</span></td>
+                            <td><span class="badge bg-primary fs-6">${{ number_format($row['forecast'], 2, ',', '.') }}</span></td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
 
-           
+
         </div>
     </div>
 
@@ -173,7 +173,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return 'Rp ' + new Intl.NumberFormat('id-ID').format(context.raw);
+                            return '$' + new Intl.NumberFormat('id-ID').format(context.raw);
                         }
                     }
                 }
@@ -182,7 +182,7 @@
                 y: {
                     ticks: {
                         callback: function(value) {
-                            return 'Rp ' + value.toLocaleString("id-ID");
+                            return '$' + value.toLocaleString("id-ID");
                         }
                     }
                 }
